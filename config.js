@@ -81,7 +81,7 @@ window.PORTAL_CONFIG = {
       id: 'produtos', nome: 'Produtos e Preço', itens: [
         { id: 'calculadora', nome: 'Calculadora de precificação', tipo: 'app',
           descricao: 'Preço e margem no Mercado Livre e na Shopee, com custo e medidas do Bling.',
-          links: { todas: 'https://script.google.com/macros/s/AKfycbxA1XdMDE_aTGnqoxZXIFh5wOKp2oK8vCA4MIDSFOFZSdEw3w0ZTTyh6dUYRPdl_6lL/exec' } },
+          links: { todas: 'https://alansguerra.github.io/portal/calculadora.html' } },
         { id: 'custo-produtos', nome: 'Custo de produtos', tipo: 'planilha',
           arquivo: 'CUSTO DE PRODUTOS 2026',
           links: { turpial: 'https://docs.google.com/spreadsheets/d/1PCHNKeyIK80zh_kmFINibLU8xaN8OzVC9nD_ANXgj3Q/edit' } },
