@@ -42,7 +42,7 @@ window.PORTAL_CONFIG = {
           links: { todas: 'https://alansguerra.github.io/expedicao/' } },
         { id: 'picking', nome: 'Picking', tipo: 'app',
           descricao: 'Lista de picking das duas lojas, com relatório no Slack.',
-          links: { todas: 'https://alansguerra.github.io/expedicao/separacao.html' } },
+          links: { todas: 'https://alansguerra.github.io/expedicao/picking.html' } },
         { id: 'gestao-expedicao', nome: 'Gestão da expedição', tipo: 'app',
           descricao: 'Pedidos por dia, picos e financeiro do Full.',
           links: { todas: 'https://alansguerra.github.io/expedicao/gestao.html' } },
