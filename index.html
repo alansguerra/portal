@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+:root{
+  --bg:#0A0E14; --dot:rgba(148,163,184,.10); --surface:#111722; --surface-2:#0D121A; --chrome:rgba(13,18,26,.92);
+  --line:#1F2937; --line-2:#2A3546; --text:#E6EDF3; --text-2:#C5CED9; --muted:#8B98A9; --faint:#5A6678;
+  --hover:rgba(148,163,184,.08); --warn-bg:rgba(234,179,8,.10); --warn-line:rgba(234,179,8,.45); --warn-text:#F5D77A;
+  --on-accent:#0A0E14;
+  --accent:#38A3F1; --glow:rgba(56,163,241,.22); --tint:rgba(56,163,241,.12);
+  color-scheme: dark;
+}
+:root[data-theme="light"]{
+  --bg:#F3F5F8; --dot:rgba(71,85,105,.10); --surface:#FFFFFF; --surface-2:#F8FAFC; --chrome:rgba(255,255,255,.94);
+  --line:#E2E7EE; --line-2:#CBD3DE; --text:#141A22; --text-2:#2B3542; --muted:#566273; --faint:#8A95A5;
+  --hover:rgba(15,23,42,.05); --warn-bg:#FFF8E6; --warn-line:#E8C770; --warn-text:#5C4300;
+  --on-accent:#FFFFFF;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background-color:var(--bg);background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:22px 22px;
+  color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit}
+a{color:var(--accent)}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.disp{font-family:'Space Grotesk',Inter,sans-serif}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- PIN ---------- */
+#pin{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;z-index:50;background:var(--bg)}
+#pin .box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:28px 24px;display:flex;flex-direction:column;gap:18px;text-align:center}
+#pin .logo{width:52px;height:52px;margin:0 auto;border-radius:14px;border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700;font-size:18px;box-shadow:0 0 22px var(--glow)}
+#pin input{width:100%;font-size:26px;letter-spacing:10px;text-align:center;padding:14px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--text)}
+#pin button{padding:14px;border:0;border-radius:12px;background:var(--accent);color:var(--on-accent);font-weight:600;font-size:15px;cursor:pointer}
+#pin .err{color:#F0525A;font-size:13px;min-height:18px}
+
+/* ---------- Layout ---------- */
+#app{display:none;min-height:100%;flex-direction:column}
+#app.on{display:flex}
+header{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px;
+  padding:12px 24px;background:var(--chrome);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);box-shadow:inset 0 -2px 0 var(--accent)}
+.brand{display:flex;align-items:center;gap:12px;background:none;border:0;color:inherit;cursor:pointer;padding:0;text-align:left}
+.brand .logo{width:38px;height:38px;border-radius:11px;border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700;font-size:15px;box-shadow:0 0 18px var(--glow);flex-shrink:0}
+.brand .n{font-weight:700;font-size:18px;letter-spacing:.3px;display:block}
+.brand .s{font-size:11px;color:var(--muted);letter-spacing:1.2px;display:block}
+.hright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.seg{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.seg button{border:0;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;min-height:36px;background:transparent;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);box-shadow:0 0 16px var(--glow)}
+.seg.theme button{padding:8px 10px;display:flex;align-items:center;justify-content:center}
+.seg.theme button[aria-pressed="true"]{background:var(--tint);color:var(--accent);box-shadow:none}
+.iconbtn{display:none;width:44px;height:44px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);cursor:pointer;align-items:center;justify-content:center}
+
+.body{display:flex;flex:1;min-height:0}
+nav{width:270px;flex-shrink:0;background:var(--chrome);border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;position:sticky;top:65px;height:calc(100vh - 65px)}
+.nitem{width:100%;border:0;background:transparent;padding:9px 12px;border-radius:10px;font-size:14px;color:var(--text-2);cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:38px}
+.nitem:hover{background:var(--hover)}
+.nitem.on{background:var(--tint);color:var(--accent);font-weight:600}
+.nitem .ext{font-size:12px;color:var(--faint)}
+.nitem.home{font-weight:600;color:var(--text);margin-bottom:6px}
+.ghead{width:100%;border:0;background:transparent;padding:12px 12px 8px;border-radius:10px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.ghead:hover{background:var(--hover)}
+.ghead svg{transition:transform .15s}
+.ghead[aria-expanded="true"] svg{transform:rotate(90deg)}
+.gitems{display:flex;flex-direction:column;gap:2px;padding:0 0 8px 6px}
+.gitems[hidden]{display:none}
+
+main{flex:1;min-width:0;padding:28px 32px 40px;display:flex;flex-direction:column;gap:20px}
+.kicker{font-size:11px;letter-spacing:1.4px;color:var(--accent)}
+.crumb{font-size:11px;letter-spacing:1.2px;color:var(--muted)}
+h1{margin:0;font-family:'Space Grotesk',Inter,sans-serif;font-size:30px;font-weight:700;letter-spacing:-.4px}
+h2{margin:0;font-family:'Space Grotesk',Inter,sans-serif;font-size:17px;font-weight:600}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.tile .l{font-size:11px;letter-spacing:1.2px;color:var(--muted)}
+.tile .v{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:600;color:var(--faint)}
+.tile .f{font-size:12px;color:var(--muted)}
+.rule{display:flex;align-items:center;gap:12px}
+.rule:after{content:"";flex:1;height:1px;background:var(--line)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.card{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:8px;min-height:112px;color:var(--text)}
+.card:hover{border-color:var(--line-2)}
+.card .g{font-size:11px;letter-spacing:1px;color:var(--muted)}
+.card .t{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600}
+.card .k{font-size:12px;color:var(--accent)}
+.badge{font-size:11px;letter-spacing:.8px;padding:5px 10px;border-radius:999px;border:1px solid var(--accent);color:var(--accent)}
+.titlerow{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:16px;max-width:660px}
+.panel .lbl{font-size:11px;letter-spacing:1.2px;color:var(--muted)}
+.btn{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:var(--on-accent);text-decoration:none;font-weight:600;font-size:14px;padding:12px 20px;border-radius:12px;box-shadow:0 0 22px var(--glow);border:0;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent);box-shadow:none}
+.warn{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:12px;padding:14px 16px;font-size:14px;color:var(--warn-text);max-width:660px}
+.muted{color:var(--muted);font-size:14px;margin:0}
+.framewrap{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
+.framebar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+iframe.appframe{width:100%;flex:1;min-height:calc(100vh - 230px);border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.scrim{display:none}
+
+/* ---------- Celular ---------- */
+@media (max-width:820px){
+  header{padding:10px 14px;gap:10px}
+  .brand .s{display:none}
+  .iconbtn{display:flex}
+  .hright{width:100%;justify-content:space-between}
+  .seg.store{flex:1}
+  .seg.store button{flex:1;padding:8px 6px}
+  nav{position:fixed;top:0;left:0;bottom:0;height:auto;width:min(86vw,320px);z-index:40;transform:translateX(-102%);transition:transform .2s;background:var(--surface);padding-top:20px}
+  nav.open{transform:none}
+  .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:35;opacity:0;pointer-events:none;transition:opacity .2s}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .nitem{min-height:46px;font-size:15px}
+  main{padding:18px 16px 32px}
+  h1{font-size:24px}
+  .tiles{gap:8px}
+  .tile{padding:12px;border-radius:14px}
+  .tile .v{font-size:18px}
+  .tile .l{font-size:9px}
+  .tile .f{display:none}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .card{min-height:96px;padding:14px}
+  .card .t{font-size:15px}
+  .card .k{display:none}
+  iframe.appframe{min-height:calc(100vh - 250px)}
+}
+</style>
+</head>
+<body>
+
+<div id="pin" role="dialog" aria-labelledby="pinTitle">
+  <form class="box" id="pinForm" autocomplete="off">
+    <div class="logo disp" id="pinLogo">GM</div>
+    <div>
+      <div class="disp" id="pinTitle" style="font-size:20px;font-weight:700">Portal</div>
+      <div class="mono" style="font-size:11px;color:var(--muted);letter-spacing:1.2px;margin-top:4px">DIGITE O PIN</div>
+    </div>
+    <label for="pinInput" style="position:absolute;left:-9999px">PIN</label>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="8" autofocus>
+    <div class="err" id="pinErr" aria-live="polite"></div>
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+
+<div id="app">
+  <header>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="iconbtn" id="menuBtn" aria-label="Abrir menu" aria-controls="nav" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg>
+      </button>
+      <button class="brand" id="brandBtn" aria-label="Ir para o início">
+        <span class="logo disp" id="brandLogo">GM</span>
+        <span><span class="n disp" id="brandName"></span><span class="s mono" id="brandSub"></span></span>
+      </button>
+    </div>
+    <div class="hright">
+      <div class="seg store" id="storeSeg" role="group" aria-label="Loja"></div>
+      <div class="seg theme" id="themeSeg" role="group" aria-label="Tema">
+        <button data-t="auto" aria-label="Tema automático" title="Automático"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+        <button data-t="light" aria-label="Tema claro" title="Claro"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+        <button data-t="dark" aria-label="Tema escuro" title="Escuro"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      </div>
+    </div>
+  </header>
+  <div class="scrim" id="scrim"></div>
+  <div class="body">
+    <nav id="nav" aria-label="Menu"></nav>
+    <main id="main"></main>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var C = window.PORTAL_CONFIG;
+  var $ = function(id){ return document.getElementById(id); };
+  var mem = {
+    get: function(k){ try { return localStorage.getItem('gm_' + k); } catch(e){ return null; } },
+    set: function(k, v){ try { localStorage.setItem('gm_' + k, v); } catch(e){} }
+  };
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  var KIND = { app: 'Abre no portal', planilha: 'Planilha · nova aba', externo: 'Site externo' };
+
+  var state = {
+    store: mem.get('loja') || C.lojas[0].id,
+    theme: mem.get('tema') || 'auto',
+    open: (function(){ try { return JSON.parse(mem.get('grupos') || 'null') || { expedicao: true }; } catch(e){ return { expedicao: true }; } })(),
+    sel: null
+  };
+  if (!C.lojas.some(function(l){ return l.id === state.store; })) state.store = C.lojas[0].id;
+
+  var index = {};
+  C.grupos.forEach(function(g){ g.itens.forEach(function(it){ it.grupo = g; index[it.id] = it; }); });
+
+  /* ---------- Tema e cor da loja ---------- */
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function isDark(){ return state.theme === 'dark' || (state.theme === 'auto' && (!mq || mq.matches)); }
+  function hexA(hex, a){ var n = parseInt(hex.slice(1), 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; }
+  function paint(){
+    var dark = isDark();
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    var loja = C.lojas.filter(function(l){ return l.id === state.store; })[0];
+    var c = dark ? loja.cor : loja.corClara;
+    var s = document.documentElement.style;
+    s.setProperty('--accent', c);
+    s.setProperty('--glow', hexA(c, dark ? .22 : .18));
+    s.setProperty('--tint', hexA(c, dark ? .13 : .10));
+    var meta = document.querySelector('meta[name=theme-color]');
+    if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
+    meta.content = dark ? '#0A0E14' : '#F3F5F8';
+  }
+  if (mq && mq.addEventListener) mq.addEventListener('change', function(){ if (state.theme === 'auto') paint(); });
+
+  /* ---------- PIN ---------- */
+  function sha256(txt){
+    var data = new TextEncoder().encode(txt);
+    return crypto.subtle.digest('SHA-256', data).then(function(buf){
+      return Array.prototype.map.call(new Uint8Array(buf), function(b){ return ('0' + b.toString(16)).slice(-2); }).join('');
+    });
+  }
+  function unlock(){ $('pin').style.display = 'none'; $('app').classList.add('on'); route(); }
+  $('pinLogo').textContent = C.sigla; $('pinTitle').textContent = C.nome;
+  $('pinForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    sha256($('pinInput').value.trim()).then(function(h){
+      if (h === C.pinHash) { mem.set('pin', h); unlock(); }
+      else { $('pinErr').textContent = 'PIN incorreto.'; $('pinInput').value = ''; $('pinInput').focus(); }
+    });
+  });
+
+  /* ---------- Cabeçalho ---------- */
+  document.title = C.nome + ' · Portal';
+  $('brandLogo').textContent = C.sigla; $('brandName').textContent = C.nome; $('brandSub').textContent = C.subtitulo;
+  function renderStores(){
+    $('storeSeg').innerHTML = C.lojas.map(function(l){
+      return '<button data-l="' + esc(l.id) + '" aria-pressed="' + (l.id === state.store) + '">' + esc(l.nome) + '</button>';
+    }).join('');
+  }
+  $('storeSeg').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    state.store = b.getAttribute('data-l'); mem.set('loja', state.store);
+    renderStores(); paint(); renderMain();
+  });
+  function renderTheme(){
+    Array.prototype.forEach.call($('themeSeg').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-t') === state.theme); });
+  }
+  $('themeSeg').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    state.theme = b.getAttribute('data-t'); mem.set('tema', state.theme); renderTheme(); paint();
+  });
+  $('brandBtn').addEventListener('click', function(){ go(''); });
+
+  /* ---------- Menu ---------- */
+  var chev = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>';
+  function renderNav(){
+    var h = '<button class="nitem home' + (!state.sel ? ' on' : '') + '" data-go="">Início</button>';
+    C.grupos.forEach(function(g){
+      var open = !!state.open[g.id];
+      h += '<button class="ghead mono" data-g="' + esc(g.id) + '" aria-expanded="' + open + '"><span>' + esc(g.nome) + '</span>' + chev + '</button>';
+      h += '<div class="gitems"' + (open ? '' : ' hidden') + '>';
+      g.itens.forEach(function(it){
+        h += '<button class="nitem' + (state.sel === it.id ? ' on' : '') + '" data-go="' + esc(it.id) + '"><span>' + esc(it.nome) + '</span>' +
+             (it.tipo !== 'app' ? '<span class="ext" aria-hidden="true">↗</span>' : '') + '</button>';
+      });
+      h += '</div>';
+    });
+    $('nav').innerHTML = h;
+  }
+  $('nav').addEventListener('click', function(e){
+    var g = e.target.closest('[data-g]');
+    if (g) { var id = g.getAttribute('data-g'); state.open[id] = !state.open[id]; mem.set('grupos', JSON.stringify(state.open)); renderNav(); return; }
+    var b = e.target.closest('[data-go]'); if (!b) return;
+    var it = index[b.getAttribute('data-go')];
+    if (it && it.tipo !== 'app') { var l = linkFor(it); if (l.url) window.open(l.url, '_blank', 'noopener'); }
+    go(b.getAttribute('data-go'));
+    closeMenu();
+  });
+  function openMenu(){ $('nav').classList.add('open'); $('scrim').classList.add('open'); $('menuBtn').setAttribute('aria-expanded', 'true'); }
+  function closeMenu(){ $('nav').classList.remove('open'); $('scrim').classList.remove('open'); $('menuBtn').setAttribute('aria-expanded', 'false'); }
+  $('menuBtn').addEventListener('click', function(){ $('nav').classList.contains('open') ? closeMenu() : openMenu(); });
+  $('scrim').addEventListener('click', closeMenu);
+
+  /* ---------- Links por loja ---------- */
+  function lojaNome(id){ var l = C.lojas.filter(function(x){ return x.id === id; })[0]; return l ? l.nome : id; }
+  function linkFor(it){
+    var L = it.links || {};
+    if (L.todas) return { url: L.todas, loja: null };
+    if (L[state.store]) return { url: L[state.store], loja: state.store };
+    var outra = Object.keys(L)[0];
+    return { url: outra ? L[outra] : null, loja: outra || null, faltou: true };
+  }
+
+  /* ---------- Conteúdo ---------- */
+  function renderHome(){
+    var tiles = ['VENDAS HOJE', 'MARGEM DO MÊS', 'CAIXA'].map(function(t){
+      return '<div class="tile"><span class="l mono">' + t + '</span><span class="v">— — —</span><span class="f">Painel de gestão · em breve</span></div>';
+    }).join('');
+    var cards = C.maisUsados.map(function(id){
+      var it = index[id]; if (!it) return '';
+      return '<button class="card" data-go="' + esc(id) + '"><span class="g mono">' + esc(it.grupo.nome.toUpperCase()) + '</span>' +
+             '<span class="t">' + esc(it.nome) + '</span><span class="k">' + KIND[it.tipo] + ' →</span></button>';
+    }).join('');
+    return '<div style="display:flex;flex-direction:column;gap:6px"><span class="kicker mono">// LOJA ' + esc(lojaNome(state.store).toUpperCase()) + '</span><h1>Início</h1></div>' +
+           '<div class="tiles">' + tiles + '</div>' +
+           '<h2 class="rule">Mais usados</h2><div class="cards">' + cards + '</div>';
+  }
+  function renderItem(it){
+    var l = linkFor(it);
+    var h = '<div style="display:flex;flex-direction:column;gap:6px"><span class="crumb mono">' + esc((it.grupo.nome + ' / ' + it.nome).toUpperCase()) + '</span>' +
+            '<div class="titlerow"><h1>' + esc(it.nome) + '</h1><span class="badge mono">' + KIND[it.tipo] + '</span></div></div>';
+    if (!l.url) {
+      return h + '<div class="warn">Link pendente: o arquivo "' + esc(it.arquivo || it.nome) + '" ainda não foi ligado ao portal.</div>';
+    }
+    if (l.faltou) {
+      h += '<div class="warn">Este item não tem versão ' + esc(lojaNome(state.store)) + '. Abaixo está a versão ' + esc(lojaNome(l.loja)) + '.</div>';
+    }
+    if (it.tipo === 'app') {
+      return h.replace('</div></div>', '</div></div>') +
+        '<div class="framewrap"><div class="framebar"><p class="muted">' + esc(it.descricao || '') + '</p>' +
+        '<a class="btn ghost" href="' + esc(l.url) + '" target="_blank" rel="noopener">Abrir em nova aba ↗</a></div>' +
+        '<iframe class="appframe" src="' + esc(l.url) + '" title="' + esc(it.nome) + '" allow="camera; microphone; clipboard-write; fullscreen"></iframe></div>';
+    }
+    var lojaTxt = l.loja ? ' · ' + lojaNome(l.loja) : '';
+    return h + '<div class="panel">' +
+      (it.tipo === 'planilha' ? '<p class="muted">O Google não deixa planilhas abrirem dentro de outra página, então ela abre numa nova aba. Se a aba não abriu sozinha, use o botão.</p>' : '<p class="muted">Abre o site numa nova aba.</p>') +
+      (it.arquivo ? '<div style="display:flex;flex-direction:column;gap:4px"><span class="lbl mono">ARQUIVO</span><span class="mono" style="font-size:14px">' + esc(it.arquivo + lojaTxt) + '</span></div>' : '') +
+      (it.nota ? '<p class="muted" style="font-size:13px">' + esc(it.nota) + '</p>' : '') +
+      '<a class="btn" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + (it.tipo === 'externo' ? 'Abrir ' + esc(it.nome) : 'Abrir planilha') + ' ↗</a></div>';
+  }
+  function renderMain(){
+    var it = state.sel ? index[state.sel] : null;
+    $('main').innerHTML = it ? renderItem(it) : renderHome();
+  }
+  $('main').addEventListener('click', function(e){
+    var b = e.target.closest('[data-go]'); if (!b) return;
+    var it = index[b.getAttribute('data-go')];
+    if (it && it.tipo !== 'app') { var l = linkFor(it); if (l.url) window.open(l.url, '_blank', 'noopener'); }
+    go(b.getAttribute('data-go'));
+  });
+
+  /* ---------- Navegação pelo endereço (#item) ---------- */
+  function go(id){ if (location.hash.slice(1) === id) route(); else location.hash = id; }
+  function route(){
+    var id = decodeURIComponent(location.hash.slice(1));
+    state.sel = index[id] ? id : null;
+    if (state.sel) { state.open[index[id].grupo.id] = true; }
+    renderNav(); renderMain(); window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', route);
+
+  /* ---------- Início ---------- */
+  renderStores(); renderTheme(); paint();
+  if (mem.get('pin') === C.pinHash) unlock();
+})();
+</script>
+</body>
+</html>
