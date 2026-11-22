@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+/* Adaptador: a tela roda no GitHub e fala com o Apps Script (Bling Sync, conta da empresa)
+   por POST JSON. Imita google.script.run, então o resto do código fica igual ao original.
+   Funciona com várias contas Google logadas no navegador. */
+(function () {
+  var API_URL = "https://script.google.com/macros/s/AKfycbxA1XdMDE_aTGnqoxZXIFh5wOKp2oK8vCA4MIDSFOFZSdEw3w0ZTTyh6dUYRPdl_6lL/exec";
+  function runner(ok, fail) {
+    return new Proxy({}, { get: function (_, nome) {
+      if (nome === "withSuccessHandler") return function (f) { return runner(f, fail); };
+      if (nome === "withFailureHandler") return function (f) { return runner(ok, f); };
+      if (nome === "withUserObject") return function () { return runner(ok, fail); };
+      return function () {
+        var args = Array.prototype.slice.call(arguments);
+        fetch(API_URL, { method: "POST", credentials: "omit",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ fn: nome, args: args }) })
+          .then(function (r) { if (!r.ok) throw new Error("Servidor respondeu " + r.status); return r.json(); })
+          .then(function (j) { if (j.ok) { if (ok) ok(j.data); } else { throw new Error(j.erro || "Erro no servidor"); } })
+          .catch(function (e) { if (fail) fail(e); else console.error(e); });
+      };
+    } });
+  }
+  window.google = { script: { run: runner(null, null) } };
+})();
+</script>
+<meta charset="utf-8">
+<title>Precificação · Turpial e Empório</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent:#1E88C9; --accent-2:#1565A8; --accent-soft:#E3F2FD; --accent-ink:#0B4A78;
+    --ink:#0f172a; --ink-2:#334155; --muted:#64748b; --line:#e2e8f0; --bg:#f1f4f8; --card:#ffffff;
+    --ml:#ffe600; --ml-soft:#fff9d6; --sh:#ee4d2d; --sh-soft:#fff0eb;
+    --ok:#15803d; --ok-soft:#dcfce7; --warn:#b45309; --warn-soft:#fef3c7; --bad:#b91c1c; --bad-soft:#fee2e2;
+    --r:14px; --shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.18);
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; font-family:Inter,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:15px; color:var(--ink); background:var(--bg); }
+  button, input { font-family:inherit; }
+
+  /* ---------- topo ---------- */
+  header { position:sticky; top:0; z-index:5; background:linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); color:#fff; padding:14px 16px; box-shadow:0 4px 20px -8px rgba(0,0,0,.35); }
+  .top { max-width:1120px; margin:0 auto; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .brand { flex:1; min-width:160px; }
+  .brand h1 { margin:0; font-size:17px; font-weight:800; letter-spacing:-.2px; line-height:1.1; }
+  .brand small { display:block; font-size:12px; opacity:.85; font-weight:500; margin-top:2px; }
+  .seg { display:flex; background:rgba(255,255,255,.18); padding:3px; border-radius:999px; }
+  .seg button { border:0; background:transparent; color:#fff; padding:8px 16px; border-radius:999px; font-weight:700; font-size:14px; cursor:pointer; transition:.15s; }
+  .seg button.on { background:#fff; color:var(--accent-2); box-shadow:0 2px 8px rgba(0,0,0,.15); }
+  .icon { background:rgba(255,255,255,.16); border:0; color:#fff; width:38px; height:38px; border-radius:10px; cursor:pointer; display:grid; place-items:center; transition:.15s; }
+  .icon:hover { background:rgba(255,255,255,.28); }
+  .icon svg { width:20px; height:20px; }
+
+  main { max-width:1120px; margin:0 auto; padding:16px 12px 80px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:18px; margin-bottom:14px; box-shadow:var(--shadow); }
+  .card-h { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .card h2 .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); display:inline-block; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .g2 { grid-column:span 2; }
+  .f { display:flex; flex-direction:column; gap:5px; font-size:12px; color:var(--muted); font-weight:600; }
+  .f .lbl { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .f .lbl em { font-style:normal; font-size:10px; font-weight:700; padding:1px 7px; border-radius:999px; background:var(--accent-soft); color:var(--accent-ink); }
+  .f .lbl em.man { background:var(--warn-soft); color:var(--warn); }
+  input[type=text], input[type=number] { font-size:16px; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; width:100%; background:#fff; color:var(--ink); transition:.15s; font-weight:500; }
+  input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  input[type=number] { font-variant-numeric:tabular-nums; }
+  input.dirty { border-color:var(--warn); background:#fffdf5; }
+  .ro { font-size:16px; padding:10px 12px; border-radius:10px; background:#f8fafc; border:1.5px solid transparent; min-height:44px; color:var(--ink-2); font-weight:500; }
+  .ro small { display:block; color:var(--muted); font-size:11px; font-weight:500; margin-top:2px; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .btn { background:var(--accent); color:#fff; border:0; padding:11px 16px; border-radius:10px; font-weight:700; cursor:pointer; font-size:14px; white-space:nowrap; display:inline-flex; align-items:center; gap:8px; transition:.15s; }
+  .btn:hover { filter:brightness(1.07); }
+  .btn.ghost { background:#fff; color:var(--accent-ink); border:1.5px solid var(--line); }
+  .btn.ghost:hover { border-color:var(--accent); background:var(--accent-soft); filter:none; }
+  .btn.sm { padding:7px 12px; font-size:13px; }
+  .btn:disabled { opacity:.5; cursor:default; }
+  .btn svg { width:16px; height:16px; }
+  .hint { font-size:12px; color:var(--muted); line-height:1.4; }
+  .chk { display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; cursor:pointer; user-select:none; }
+  .chk input { width:20px; height:20px; accent-color:var(--accent); margin:0; }
+  details.ovr { margin-top:12px; border:1.5px dashed var(--line); border-radius:10px; padding:10px 12px; }
+  details.ovr summary { cursor:pointer; font-size:13px; font-weight:700; color:var(--ink-2); list-style:none; }
+  details.ovr summary::-webkit-details-marker { display:none; }
+  details.ovr summary::before { content:'▸ '; color:var(--muted); }
+  details.ovr[open] summary::before { content:'▾ '; }
+  details.ovr.on { border-color:var(--warn); background:#fffdf5; }
+  .canal td.k em.ov { font-style:normal; font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px; background:var(--warn-soft); color:var(--warn); margin-left:4px; }
+
+  /* ---------- produto: cabeçalho do item ---------- */
+  .prod-title { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:12px; background:linear-gradient(180deg,#f8fafc,#f1f5f9); border:1px solid var(--line); margin-top:12px; }
+  .prod-title .t { flex:1; min-width:0; }
+  .prod-title .t b { display:block; font-size:15px; line-height:1.3; }
+  .prod-title .t span { font-size:12px; color:var(--muted); }
+  .chip { font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+  .chip.bling { background:var(--accent-soft); color:var(--accent-ink); }
+  .chip.live { background:var(--ok-soft); color:var(--ok); }
+  .chip.novo { background:var(--warn-soft); color:var(--warn); }
+  .chip.off { background:var(--bad-soft); color:var(--bad); }
+
+  /* ---------- sugestões ---------- */
+  .rel { position:relative; }
+  #sug { position:absolute; z-index:9; left:0; right:0; top:100%; margin-top:6px; background:#fff; border:1px solid var(--line); border-radius:12px; max-height:300px; overflow:auto; box-shadow:0 16px 40px -12px rgba(15,23,42,.35); display:none; }
+  #sug div { padding:10px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9; font-size:14px; display:flex; flex-direction:column; gap:2px; }
+  #sug div:last-child { border-bottom:0; }
+  #sug div:hover, #sug div.act { background:var(--accent-soft); }
+  #sug b { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13px; letter-spacing:.2px; }
+  #sug span { color:var(--muted); font-size:12px; }
+
+  /* ---------- canais ---------- */
+  .canais { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; }
+  .canal { border-radius:12px; padding:14px; background:#fff; border:1px solid var(--line); position:relative; overflow:hidden; }
+  .canal::before { content:""; position:absolute; left:0; top:0; right:0; height:4px; }
+  .canal.ml::before { background:var(--ml); } .canal.sh::before { background:var(--sh); }
+  .canal h3 { margin:2px 0 10px; font-size:13px; font-weight:700; color:var(--ink-2); display:flex; align-items:center; gap:8px; }
+  .canal h3 .mk { font-size:10px; font-weight:800; padding:2px 7px; border-radius:6px; letter-spacing:.5px; }
+  .canal.ml h3 .mk { background:var(--ml-soft); color:#7a6a00; } .canal.sh h3 .mk { background:var(--sh-soft); color:var(--sh); }
+  .canal .big { font-size:28px; font-weight:800; letter-spacing:-.5px; margin:2px 0 10px; font-variant-numeric:tabular-nums; }
+  .canal table { width:100%; border-collapse:collapse; font-size:13px; }
+  .canal td { padding:5px 0; border-bottom:1px dashed var(--line); vertical-align:top; }
+  .canal td:last-child { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
+  .canal td.k { color:var(--muted); font-weight:500; }
+  .canal td.k small { display:block; font-size:11px; color:#94a3b8; }
+  .canal tr.tot td { border-bottom:0; padding-top:10px; }
+  .canal tr.rep td { background:#f8fafc; border-bottom:1px solid var(--line); border-top:1px solid var(--line); padding:7px 6px; }
+  .canal tr.rep td.k { color:var(--ink-2); font-weight:700; }
+  .canal tr.rep td:last-child { font-weight:800; font-size:14px; }
+  .kpi { display:flex; gap:8px; margin-top:10px; }
+  .kpi > div { flex:1; border-radius:10px; padding:10px 12px; background:#f8fafc; }
+  .kpi > div span { display:block; font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.6px; }
+  .kpi > div b { font-size:20px; font-variant-numeric:tabular-nums; letter-spacing:-.3px; }
+  .kpi .ok { background:var(--ok-soft); } .kpi .ok b { color:var(--ok); }
+  .kpi .warn { background:var(--warn-soft); } .kpi .warn b { color:var(--warn); }
+  .kpi .bad { background:var(--bad-soft); } .kpi .bad b { color:var(--bad); }
+  .empty { color:var(--muted); font-size:13px; padding:10px 0; }
+
+  /* ---------- modal / toast ---------- */
+  #toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#0f172a; color:#fff; padding:11px 18px; border-radius:12px; font-size:14px; display:none; z-index:20; max-width:90vw; box-shadow:0 10px 30px rgba(0,0,0,.3); }
+  #overlay { position:fixed; inset:0; background:rgba(15,23,42,.5); backdrop-filter:blur(2px); display:none; z-index:15; align-items:flex-start; justify-content:center; overflow:auto; padding:24px 10px; }
+  .modal { background:#fff; border-radius:16px; padding:20px; width:100%; max-width:640px; box-shadow:0 30px 60px -20px rgba(0,0,0,.4); }
+  .modal h2 { margin:0 0 12px; font-size:16px; }
+  .modal table { width:100%; border-collapse:collapse; font-size:13px; }
+  .modal td { padding:8px 4px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  .modal td input { padding:7px 9px; font-size:14px; }
+  .modal td small { color:var(--muted); display:block; font-weight:400; }
+  #loading { text-align:center; padding:80px 20px; color:var(--muted); }
+  .spin { width:28px; height:28px; border:3px solid var(--line); border-top-color:var(--accent); border-radius:50%; margin:0 auto 12px; animation:sp .8s linear infinite; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+  @media (max-width:640px){ .g2 { grid-column:span 1; } .card { padding:14px; } .grid { grid-template-columns:repeat(2,1fr); } .grid .g2 { grid-column:span 2; } .brand small { display:none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><h1 id="titulo">Precificação</h1><small id="subtitulo">Mercado Livre · Shopee</small></div>
+    <div class="seg">
+      <button id="bt-TURPIAL" onclick="setLoja('TURPIAL')">Turpial</button>
+      <button id="bt-EMPORIO" onclick="setLoja('EMPORIO')">Empório</button>
+    </div>
+    <button class="icon" title="Configurações" onclick="abrirConfig()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="icon" title="Recarregar catálogo e tabelas" onclick="carregar(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+  </div>
+</header>
+
+<main>
+  <div id="loading"><div class="spin"></div>Carregando catálogo e tabelas…</div>
+  <div id="app" style="display:none">
+
+  <!-- ===== PRODUTO ===== -->
+  <div class="card">
+    <div class="card-h">
+      <h2><span class="dot"></span>Produto</h2>
+      <div class="row">
+        <button class="btn ghost sm" id="btBling" onclick="atualizarBling()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Atualizar do Bling</button>
+        <button class="btn ghost sm" onclick="limparProduto()">Novo / limpar</button>
+      </div>
+    </div>
+    <div class="grid">
+      <label class="f g2 rel"><span class="lbl">SKU ou título</span>
+        <input type="text" id="sku" placeholder="Digite o SKU (pode colar “SKU: …”) ou parte do título" autocomplete="off" autocapitalize="characters">
+        <div id="sug"></div>
+      </label>
+      <label class="f"><span class="lbl">Custo do produto (R$) <em id="tagCusto">Bling</em></span>
+        <input type="number" id="custo" step="0.01" min="0" placeholder="0,00" inputmode="decimal">
+      </label>
+      <label class="f"><span class="lbl">Outras despesas (R$)</span>
+        <input type="number" id="outras" step="0.01" min="0" value="0" inputmode="decimal">
+      </label>
+    </div>
+
+    <div class="prod-title" id="prodBox">
+      <div class="t"><b id="tituloProd">Nenhum produto selecionado</b><span id="prodSub">Busque um SKU do catálogo ou preencha custo, peso e medidas à mão para um produto novo.</span></div>
+      <span class="chip novo" id="chipOrigem">manual</span>
+    </div>
+
+    <div class="grid" style="margin-top:12px">
+      <label class="f"><span class="lbl">Peso bruto (kg) <em id="tagPeso">Bling</em></span>
+        <input type="number" id="pesoBruto" step="0.001" min="0" placeholder="0,000" inputmode="decimal">
+      </label>
+      <label class="f"><span class="lbl">Comprimento (cm)</span>
+        <input type="number" id="dimC" step="0.1" min="0" placeholder="0" inputmode="decimal">
+      </label>
+      <label class="f"><span class="lbl">Largura (cm)</span>
+        <input type="number" id="dimL" step="0.1" min="0" placeholder="0" inputmode="decimal">
+      </label>
+      <label class="f"><span class="lbl">Altura (cm)</span>
+        <input type="number" id="dimA" step="0.1" min="0" placeholder="0" inputmode="decimal">
+      </label>
+      <label class="f"><span class="lbl">Peso cobrado no ML</span>
+        <div class="ro" id="pesoCobrado">—<small id="pesoNota"></small></div>
+      </label>
+      <label class="f"><span class="lbl">Estoque</span>
+        <div class="ro" id="estoque">—</div>
+      </label>
+    </div>
+    <div class="hint" id="statusCat" style="margin-top:10px"></div>
+  </div>
+
+  <!-- ===== ADS / REBATE ===== -->
+  <div class="card">
+    <div class="card-h"><h2><span class="dot"></span>Ads, rebate e frete</h2></div>
+    <div class="grid">
+      <label class="f"><span class="lbl">ROAS atual · Mercado Livre</span>
+        <input type="number" id="roasML" step="0.1" min="0" inputmode="decimal">
+      </label>
+      <label class="f"><span class="lbl">ACOS equivalente · ML</span><div class="ro" id="acosML">—</div></label>
+      <label class="f"><span class="lbl">Rebate ML (R$/venda)</span>
+        <input type="number" id="rebateML" step="0.01" min="0" value="0" inputmode="decimal">
+      </label>
+      <label class="f"><span class="lbl">ROAS atual · Shopee</span>
+        <input type="number" id="roasSH" step="0.1" min="0" inputmode="decimal">
+      </label>
+      <label class="f"><span class="lbl">ACOS equivalente · Shopee</span><div class="ro" id="acosSH">—</div></label>
+      <label class="f"><span class="lbl">Rebate Shopee (R$/venda)</span>
+        <input type="number" id="rebateSH" step="0.01" min="0" value="0" inputmode="decimal">
+      </label>
+    </div>
+    <label class="chk" style="margin-top:12px"><input type="checkbox" id="fg79"> Oferecer frete grátis no ML abaixo de R$ 79 (frete rápido)</label>
+    <details class="ovr" id="ovr">
+      <summary>Valores cobrados de fato pelo marketplace <span class="hint">— preencha só quando o painel do ML/Shopee mostrar comissão ou frete diferente da tabela; vazio = usa a tabela</span></summary>
+      <div class="grid" style="margin-top:10px">
+        <label class="f"><span class="lbl">Comissão ML Clássico (R$)</span><input type="number" id="ovComML" step="0.01" min="0" inputmode="decimal"></label>
+        <label class="f"><span class="lbl">Comissão ML Premium (R$)</span><input type="number" id="ovComMLP" step="0.01" min="0" inputmode="decimal"></label>
+        <label class="f"><span class="lbl">Frete ML (R$)</span><input type="number" id="ovFreteML" step="0.01" min="0" inputmode="decimal"></label>
+        <label class="f"><span class="lbl">Comissão Shopee (R$)</span><input type="number" id="ovComSH" step="0.01" min="0" inputmode="decimal"></label>
+      </div>
+    </details>
+  </div>
+
+  <!-- ===== PREÇO → MARGEM ===== -->
+  <div class="card">
+    <div class="card-h">
+      <h2><span class="dot"></span>Preço de venda → margem</h2>
+      <label class="f" style="min-width:220px"><span class="lbl">Preço de venda (R$) · aplica aos 3 canais</span>
+        <input type="number" id="precoTodos" step="0.01" min="0" inputmode="decimal">
+      </label>
+    </div>
+    <div class="canais" id="cardsPreco"></div>
+  </div>
+
+  <!-- ===== MARGEM → PREÇO ===== -->
+  <div class="card">
+    <div class="card-h">
+      <h2><span class="dot"></span>Margem desejada → preço</h2>
+      <label class="f" style="min-width:220px"><span class="lbl">Margem desejada (%)</span>
+        <input type="number" id="margemAlvo" step="0.5" min="0" max="95" inputmode="decimal">
+      </label>
+    </div>
+    <div class="canais" id="cardsMargem"></div>
+    <div class="hint" style="margin-top:10px">Menor preço, centavo a centavo, que atinge a margem — já considerando os degraus de frete e da taxa fixa. Arredonde para cima se quiser terminar em ,90 / ,99.</div>
+  </div>
+
+  </div>
+</main>
+
+<div id="overlay" onclick="if(event.target===this)fecharConfig()">
+  <div class="modal">
+    <h2 id="cfgTitulo">Configurações</h2>
+    <table id="cfgTab"></table>
+    <div class="row" style="margin-top:14px; justify-content:space-between">
+      <a id="linkPlanilha" href="#" target="_blank" class="hint">Tabelas de frete ML e tarifa Shopee: editar na planilha ↗</a>
+      <div class="row">
+        <button class="btn ghost" onclick="fecharConfig()">Cancelar</button>
+        <button class="btn" id="btSalvar" onclick="salvarCfg()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ===================== MOTOR DE CÁLCULO (puro) =====================
+var Engine = (function () {
+  function brlE(v) { return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
+  function pesoCobrado(prod, cfg) {
+    var cub = ((prod.largura||0) * (prod.altura||0) * (prod.profundidade||0)) / (cfg.ml_divisor_cubagem || 6000);
+    var bruto = prod.pesoBruto || 0;
+    return { cubado: cub, bruto: bruto, usado: Math.max(cub, bruto) };
+  }
+  function colunaFrete(freteML, preco, fgAbaixo, limite) {
+    var b = freteML.bandas;
+    if (preco < limite && fgAbaixo) { for (var i = 0; i < b.length; i++) if (b[i].fg) return i; }
+    for (var j = 0; j < b.length; j++) if (!b[j].fg && preco >= b[j].min && preco <= b[j].max) return j;
+    return -1;
+  }
+  function freteML(tab, peso, preco, fgAbaixo, limite) {
+    var col = colunaFrete(tab, preco, fgAbaixo, limite);
+    if (col < 0) return { valor: 0, faixa: '?', coluna: '?' };
+    var linha = null;
+    for (var i = 0; i < tab.linhas.length; i++) if (peso <= tab.linhas[i].pesoMax + 1e-9) { linha = tab.linhas[i]; break; }
+    if (!linha) linha = tab.linhas[tab.linhas.length - 1];
+    return { valor: Number(linha.valores[col]) || 0, faixa: linha.rotulo, coluna: tab.bandas[col].rotulo };
+  }
+  function tarifaShopee(tab, preco) {
+    for (var i = 0; i < tab.length; i++) if (preco >= tab[i].min && preco <= tab[i].max) return tab[i];
+    return tab[tab.length - 1];
+  }
+  function calcular(canal, P, prod, inp, cfg, tabelas) {
+    var r = { preco: P, canal: canal };
+    var acos = inp.roas > 0 ? 1 / inp.roas : 0;
+    r.acos = acos; r.custo = inp.custo || 0; r.outras = inp.outras || 0; r.rebate = inp.rebate || 0; r.ads = P * acos;
+    if (canal === 'SHOPEE') {
+      var t = tarifaShopee(tabelas.shopee, P);
+      r.comissaoPct = t.pct; r.comissao = P * t.pct + t.fixo; r.taxaFixa = t.fixo;
+      if (inp.comissaoManual != null) { r.comissao = inp.comissaoManual; r.comissaoManual = true; }
+      r.frete = 0; r.freteInfo = 'pago pela Shopee';
+      r.impostoPct = cfg.imposto_padrao; r.imposto = P * r.impostoPct;
+    } else {
+      var pct = canal === 'ML_PREMIUM' ? cfg.ml_premium : cfg.ml_classico;
+      r.comissaoPct = pct; r.comissao = P * pct; r.taxaFixa = 0;
+      if (inp.comissaoManual != null) { r.comissao = inp.comissaoManual; r.comissaoManual = true; }
+      var limite = cfg.ml_limite_frete_gratis || 79;
+      var peso = pesoCobrado(prod, cfg);
+      var f = freteML(tabelas.freteML, peso.usado, P, !!inp.freteGratisAbaixo79, limite);
+      r.frete = f.valor; r.freteInfo = f.faixa + ' · ' + f.coluna; r.peso = peso;
+      if (inp.freteManual != null) { r.frete = inp.freteManual; r.freteInfo = 'valor informado (tabela: ' + brlE(f.valor) + ')'; r.freteManual = true; }
+      var fg = P >= limite || !!inp.freteGratisAbaixo79;
+      r.impostoPct = fg ? cfg.imposto_frete_gratis : cfg.imposto_padrao; r.imposto = P * r.impostoPct;
+    }
+    r.repasse = P - r.comissao - r.frete;
+    r.custoTotal = r.custo + r.outras + r.imposto + r.comissao + r.frete + r.ads;
+    r.lucro = P - r.custoTotal + r.rebate;
+    r.margem = P > 0 ? r.lucro / P : 0;
+    return r;
+  }
+  function precoParaMargem(canal, alvo, prod, inp, cfg, tabelas) {
+    var base = (inp.custo || 0) + (inp.outras || 0);
+    if (base <= 0) return null;
+    var lo = Math.max(1, Math.floor(base)), hi = Math.ceil(base * 25 + 500), achou = -1;
+    for (var p = lo; p <= hi; p += 1) if (calcular(canal, p, prod, inp, cfg, tabelas).margem >= alvo) { achou = p; break; }
+    if (achou < 0) return null;
+    for (var q = Math.max(lo, achou - 1); q <= achou + 0.001; q += 0.01) {
+      var pq = Math.round(q * 100) / 100;
+      if (calcular(canal, pq, prod, inp, cfg, tabelas).margem >= alvo) return calcular(canal, pq, prod, inp, cfg, tabelas);
+    }
+    return calcular(canal, achou, prod, inp, cfg, tabelas);
+  }
+  return { calcular: calcular, precoParaMargem: precoParaMargem, pesoCobrado: pesoCobrado };
+})();
+
+// ===================== ESTADO =====================
+var BOOT = null, LOJA = 'TURPIAL', PROD = null, CFG = null;
+var CANAIS = [
+  { id: 'ML_CLASSICO', nome: 'Clássico', mk: 'ML', cls: 'ml', tag: 'Mercado Livre' },
+  { id: 'ML_PREMIUM',  nome: 'Premium',  mk: 'ML', cls: 'ml', tag: 'Mercado Livre' },
+  { id: 'SHOPEE',      nome: 'Padrão',   mk: 'SH', cls: 'sh', tag: 'Shopee' }
+];
+var $ = function (id) { return document.getElementById(id); };
+var brl = function (v) { return (v == null || isNaN(v)) ? '—' : 'R$ ' + Number(v).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
+var pct = function (v) { return (v == null || isNaN(v)) ? '—' : (Number(v) * 100).toFixed(1).replace('.', ',') + '%'; };
+var num = function (id) { var v = parseFloat(String($(id).value).replace(',', '.')); return isNaN(v) ? 0 : v; };
+var limpaSku = function (s) { return String(s || '').replace(/^\s*SKU\s*:?\s*/i, '').trim(); };
+
+function toast(msg, ms) { var t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(function(){ t.style.display='none'; }, ms || 3000); }
+
+function carregar(forcar) {
+  $('loading').style.display = 'block'; $('app').style.display = 'none';
+  google.script.run.withSuccessHandler(function (b) {
+    BOOT = b; CFG = b.config;
+    $('linkPlanilha').href = b.urlPlanilha;
+    var salva = null; try { salva = localStorage.getItem('calc.loja'); } catch (e) {}
+    setLoja(salva || LOJA);
+    $('loading').style.display = 'none'; $('app').style.display = 'block';
+    if (forcar) toast('Catálogo e tabelas recarregados.');
+  }).withFailureHandler(function (e) { $('loading').innerHTML = 'Erro ao carregar: ' + e.message; }).getBootstrap();
+}
+
+function setLoja(loja) {
+  LOJA = loja;
+  try { localStorage.setItem('calc.loja', loja); } catch (e) {}
+  var L = BOOT.lojas[loja];
+  var r = document.documentElement.style;
+  if (loja === 'TURPIAL') { r.setProperty('--accent', '#1E88C9'); r.setProperty('--accent-2', '#1565A8'); r.setProperty('--accent-soft', '#E3F2FD'); r.setProperty('--accent-ink', '#0B4A78'); }
+  else { r.setProperty('--accent', '#D32F2F'); r.setProperty('--accent-2', '#A81E1E'); r.setProperty('--accent-soft', '#FDECEC'); r.setProperty('--accent-ink', '#7F1D1D'); }
+  $('titulo').textContent = 'Precificação · ' + L.nome;
+  document.title = 'Precificação · ' + L.nome;
+  ['TURPIAL', 'EMPORIO'].forEach(function (k) { $('bt-' + k).className = k === loja ? 'on' : ''; });
+  $('statusCat').textContent = BOOT.atualizadoEm[loja] ? 'Catálogo: ' + BOOT.atualizadoEm[loja] : '';
+  limparProduto();
+  var c = CFG[loja];
+  if (c.margem_padrao) $('margemAlvo').value = +(c.margem_padrao * 100).toFixed(2);
+  if (c.roas_padrao) { $('roasML').value = c.roas_padrao; $('roasSH').value = c.roas_padrao; }
+  recalc();
+}
+
+// ---------- produto ----------
+function limparProduto(manterPadroes) {
+  PROD = null;
+  ['sku','custo','pesoBruto','dimC','dimL','dimA','roasML','rebateML','roasSH','rebateSH','precoTodos','margemAlvo','ovComML','ovComMLP','ovFreteML','ovComSH'].forEach(function (id) { $(id).value = ''; $(id).classList.remove('dirty'); });
+  $('outras').value = '0'; $('fg79').checked = false;
+  $('tituloProd').textContent = 'Nenhum produto selecionado';
+  $('prodSub').textContent = 'Busque um SKU do catálogo ou preencha custo, peso e medidas à mão para um produto novo.';
+  $('chipOrigem').textContent = 'manual'; $('chipOrigem').className = 'chip novo';
+  $('estoque').textContent = '—';
+  $('tagCusto').textContent = 'manual'; $('tagCusto').className = 'man';
+  $('tagPeso').textContent = 'manual'; $('tagPeso').className = 'man';
+  recalc();
+}
+
+function buscar(q) {
+  q = limpaSku(q).toUpperCase();
+  if (!q) return [];
+  var lista = BOOT.catalogo[LOJA] || [], out = [];
+  for (var i = 0; i < lista.length && out.length < 12; i++) { var p = lista[i]; if (p.sku.toUpperCase().indexOf(q) === 0) out.push(p); }
+  if (out.length < 12) for (var j = 0; j < lista.length && out.length < 12; j++) {
+    var p2 = lista[j];
+    if ((p2.sku.toUpperCase().indexOf(q) > 0 || p2.titulo.toUpperCase().indexOf(q) >= 0) && out.indexOf(p2) < 0) out.push(p2);
+  }
+  return out;
+}
+var sugIdx = -1;
+$('sku').addEventListener('input', function () {
+  var res = buscar(this.value), box = $('sug'); sugIdx = -1;
+  if (!res.length) { box.style.display = 'none'; return; }
+  box.innerHTML = res.map(function (p, i) {
+    return '<div data-i="' + i + '"><b>' + p.sku + (p.situacao && p.situacao !== 'Ativo' ? ' <span class="chip off">' + p.situacao + '</span>' : '') + '</b><span>' + (p.titulo || '') + '</span></div>';
+  }).join('');
+  box._res = res; box.style.display = 'block';
+});
+$('sug').addEventListener('mousedown', function (e) { var d = e.target.closest('div[data-i]'); if (d) escolher($('sug')._res[+d.dataset.i]); });
+$('sku').addEventListener('keydown', function (e) {
+  var box = $('sug');
+  if (box.style.display === 'none') { if (e.key === 'Enter') { var r = buscar(this.value); if (r.length) escolher(r[0]); } return; }
+  var items = box.querySelectorAll('div[data-i]');
+  if (e.key === 'ArrowDown') { sugIdx = Math.min(sugIdx + 1, items.length - 1); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { sugIdx = Math.max(sugIdx - 1, 0); e.preventDefault(); }
+  else if (e.key === 'Enter') { e.preventDefault(); escolher(box._res[sugIdx >= 0 ? sugIdx : 0]); return; }
+  else if (e.key === 'Escape') { box.style.display = 'none'; return; }
+  items.forEach(function (d, i) { d.className = i === sugIdx ? 'act' : ''; });
+});
+$('sku').addEventListener('blur', function () { setTimeout(function () { $('sug').style.display = 'none'; }, 150); });
+$('sku').addEventListener('paste', function () { var el = this; setTimeout(function () { var v = limpaSku(el.value); if (v !== el.value) { el.value = v; el.dispatchEvent(new Event('input')); } }, 0); });
+
+function escolher(p) {
+  var quando = (BOOT.atualizadoEm[LOJA] || '').split('|')[0].replace(/ATUALIZADO EM/i, '').trim();
+  aplicarProduto(Object.assign({}, p, { origem: 'Bling · aba de ' + quando, chip: 'bling', chipTxt: 'Bling ' + quando.split(' ')[0] }));
+}
+function aplicarProduto(p) {
+  PROD = p;
+  $('sku').value = p.sku; $('sug').style.display = 'none';
+  $('custo').value = p.preco ? +Number(p.preco).toFixed(2) : '';
+  $('pesoBruto').value = p.pesoBruto ? +Number(p.pesoBruto).toFixed(3) : '';
+  $('dimC').value = p.profundidade || ''; $('dimL').value = p.largura || ''; $('dimA').value = p.altura || '';
+  ['custo','pesoBruto','dimC','dimL','dimA'].forEach(function (id) { $(id).classList.remove('dirty'); });
+  $('tituloProd').textContent = p.titulo || p.sku;
+  $('prodSub').textContent = (p.marca ? p.marca + ' · ' : '') + (p.situacao || '') + (p.origem ? ' · ' + p.origem : '');
+  $('chipOrigem').textContent = p.chipTxt || 'Bling'; $('chipOrigem').className = 'chip ' + (p.chip || 'bling');
+  $('estoque').textContent = p.estoque == null ? '—' : p.estoque;
+  $('tagCusto').textContent = 'Bling'; $('tagCusto').className = '';
+  $('tagPeso').textContent = 'Bling'; $('tagPeso').className = '';
+  recalc();
+}
+// campos vindos do Bling que o usuário sobrescreve ficam marcados
+['custo','pesoBruto','dimC','dimL','dimA'].forEach(function (id) {
+  $(id).addEventListener('input', function () {
+    if (PROD) { this.classList.add('dirty'); if (id === 'custo') { $('tagCusto').textContent = 'editado'; $('tagCusto').className = 'man'; } else { $('tagPeso').textContent = 'editado'; $('tagPeso').className = 'man'; } }
+    recalc();
+  });
+});
+
+function atualizarBling() {
+  var sku = limpaSku($('sku').value); if (!sku) { toast('Digite o SKU primeiro.'); return; }
+  var bt = $('btBling'); bt.disabled = true; var html = bt.innerHTML; bt.textContent = 'Consultando Bling…';
+  google.script.run.withSuccessHandler(function (p) {
+    aplicarProduto(Object.assign({}, p, { origem: 'Bling ao vivo', chip: 'live', chipTxt: 'Bling ao vivo' }));
+    toast('Dados atualizados do Bling.'); bt.disabled = false; bt.innerHTML = html;
+  }).withFailureHandler(function (e) { toast('Erro: ' + e.message, 5000); bt.disabled = false; bt.innerHTML = html; }).atualizarDoBling(LOJA, sku);
+}
+
+// ---------- cálculo ----------
+function produtoAtual() { return { pesoBruto: num('pesoBruto'), profundidade: num('dimC'), largura: num('dimL'), altura: num('dimA') }; }
+function numOuNulo(id) { return $(id).value === '' ? null : num(id); }
+function entradas(c) {
+  var mk = c.mk;
+  var e = { custo: num('custo'), outras: num('outras'), roas: mk === 'SH' ? num('roasSH') : num('roasML'), rebate: mk === 'SH' ? num('rebateSH') : num('rebateML'), freteGratisAbaixo79: $('fg79').checked };
+  if (c.id === 'ML_CLASSICO') { e.comissaoManual = numOuNulo('ovComML'); e.freteManual = numOuNulo('ovFreteML'); }
+  else if (c.id === 'ML_PREMIUM') { e.comissaoManual = numOuNulo('ovComMLP'); e.freteManual = numOuNulo('ovFreteML'); }
+  else { e.comissaoManual = numOuNulo('ovComSH'); }
+  return e;
+}
+function linha(k, v, sub) { return '<tr><td class="k">' + k + (sub ? '<small>' + sub + '</small>' : '') + '</td><td>' + v + '</td></tr>'; }
+function cardResultado(c, r, destaque) {
+  var head = '<h3><span class="mk">' + c.tag.toUpperCase() + '</span>' + c.nome + '</h3>';
+  if (!r) return '<div class="canal ' + c.cls + '">' + head + '<div class="empty">Informe custo' + (destaque === 'preco' ? ' e margem' : ' e preço') + '.</div></div>';
+  var cls = r.margem >= 0.10 ? 'ok' : (r.margem < 0 ? 'bad' : 'warn');
+  return '<div class="canal ' + c.cls + '">' + head +
+    (destaque === 'preco' ? '<div class="big">' + brl(r.preco) + '</div>' : '') +
+    '<table>' +
+    linha('Custo do produto', brl(r.custo)) +
+    (r.outras ? linha('Outras despesas', brl(r.outras)) : '') +
+    linha('Imposto', brl(r.imposto), pct(r.impostoPct)) +
+    linha('Comissão' + (r.comissaoManual ? '<em class="ov">informado</em>' : ''), brl(r.comissao), r.comissaoManual ? 'tabela: ' + pct(r.comissaoPct) + (r.taxaFixa ? ' + ' + brl(r.taxaFixa) : '') : pct(r.comissaoPct) + (r.taxaFixa ? ' + ' + brl(r.taxaFixa) + ' fixo' : '')) +
+    linha('Frete' + (r.freteManual ? '<em class="ov">informado</em>' : ''), brl(r.frete), r.freteInfo) +
+    '<tr class="rep"><td class="k">Repasse do marketplace<small>preço − comissão − frete, como aparece no ML/Shopee</small></td><td>' + brl(r.repasse) + '</td></tr>' +
+    (r.acos ? linha('Ads', brl(r.ads), 'ACOS ' + pct(r.acos)) : '') +
+    (r.rebate ? linha('Rebate', '+ ' + brl(r.rebate)) : '') +
+    '</table>' +
+    '<div class="kpi"><div class="' + cls + '"><span>Lucro</span><b>' + brl(r.lucro) + '</b></div><div class="' + cls + '"><span>Margem</span><b>' + pct(r.margem) + '</b></div></div>' +
+    '</div>';
+}
+function recalc() {
+  var cfg = CFG[LOJA], tab = BOOT.tabelas, prod = produtoAtual();
+  $('acosML').textContent = num('roasML') > 0 ? pct(1 / num('roasML')) : '—';
+  $('acosSH').textContent = num('roasSH') > 0 ? pct(1 / num('roasSH')) : '—';
+  var pc = Engine.pesoCobrado(prod, cfg);
+  if (pc.usado > 0) {
+    $('pesoCobrado').childNodes[0].textContent = pc.usado.toFixed(3).replace('.', ',') + ' kg';
+    $('pesoNota').textContent = pc.cubado > pc.bruto ? 'cubado ' + pc.cubado.toFixed(3).replace('.', ',') + ' > bruto' : 'bruto > cubado ' + pc.cubado.toFixed(3).replace('.', ',');
+  } else { $('pesoCobrado').childNodes[0].textContent = '—'; $('pesoNota').textContent = 'informe peso ou medidas'; }
+  var temOv = ['ovComML','ovComMLP','ovFreteML','ovComSH'].some(function (id) { return $(id).value !== ''; });
+  $('ovr').classList.toggle('on', temOv); if (temOv) $('ovr').open = true;
+  var temCusto = num('custo') > 0;
+  var P = num('precoTodos');
+  $('cardsPreco').innerHTML = CANAIS.map(function (c) { return cardResultado(c, (temCusto && P > 0) ? Engine.calcular(c.id, P, prod, entradas(c), cfg, tab) : null); }).join('');
+  var alvo = num('margemAlvo') / 100;
+  $('cardsMargem').innerHTML = CANAIS.map(function (c) { return cardResultado(c, (temCusto && alvo > 0 && alvo < 0.95) ? Engine.precoParaMargem(c.id, alvo, prod, entradas(c), cfg, tab) : null, 'preco'); }).join('');
+}
+['outras','roasML','rebateML','roasSH','rebateSH','precoTodos','margemAlvo','ovComML','ovComMLP','ovFreteML','ovComSH'].forEach(function (id) { $(id).addEventListener('input', recalc); });
+$('fg79').addEventListener('change', recalc);
+
+// ---------- configurações ----------
+function abrirConfig() {
+  var c = CFG[LOJA], d = CFG.descricoes, rows = '';
+  Object.keys(c).forEach(function (k) {
+    var isPct = /imposto|ml_classico|ml_premium|margem/.test(k);
+    rows += '<tr><td><b>' + k + '</b><small>' + (d[k] || '') + '</small></td><td style="width:130px"><input type="number" step="any" data-k="' + k + '" data-pct="' + (isPct ? 1 : 0) + '" value="' + (isPct ? +(c[k] * 100).toFixed(4) : c[k]) + '">' + (isPct ? ' %' : '') + '</td></tr>';
+  });
+  $('cfgTab').innerHTML = rows;
+  $('cfgTitulo').textContent = 'Configurações · ' + BOOT.lojas[LOJA].nome;
+  $('overlay').style.display = 'flex';
+}
+function fecharConfig() { $('overlay').style.display = 'none'; }
+function salvarCfg() {
+  var obj = {};
+  $('cfgTab').querySelectorAll('input[data-k]').forEach(function (i) { var v = parseFloat(String(i.value).replace(',', '.')); if (isNaN(v)) v = 0; obj[i.dataset.k] = i.dataset.pct === '1' ? v / 100 : v; });
+  var bt = $('btSalvar'); bt.disabled = true; bt.textContent = 'Salvando…';
+  google.script.run.withSuccessHandler(function (cfg) { CFG = cfg; bt.disabled = false; bt.textContent = 'Salvar'; fecharConfig(); recalc(); toast('Configurações salvas.'); })
+    .withFailureHandler(function (e) { toast('Erro: ' + e.message, 5000); bt.disabled = false; bt.textContent = 'Salvar'; }).salvarConfig(LOJA, obj);
+}
+
+carregar(false);
+</script>
+</body>
+</html>
